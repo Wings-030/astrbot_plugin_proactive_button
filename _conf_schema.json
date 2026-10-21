@@ -1,0 +1,20 @@
+{
+  "enabled": {
+    "type": "bool",
+    "description": "启用主动发言",
+    "default": true,
+    "hint": "关闭后页面仍可打开，但触发请求会被拒绝。"
+  },
+  "cooldown_seconds": {
+    "type": "int",
+    "description": "同一会话冷却时间（秒）",
+    "default": 5,
+    "hint": "避免连续点击造成重复发言。"
+  },
+  "response_timeout_seconds": {
+    "type": "int",
+    "description": "等待回复的超时时间（秒）",
+    "default": 180,
+    "hint": "触发后超过这个时间仍没有消息发出，任务会标记为失败。"
+  }
+}

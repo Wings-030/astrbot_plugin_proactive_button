@@ -1,0 +1,16 @@
+name: astrbot_plugin_proactive_button
+display_name: 主动发言台
+short_desc: 在 WebUI 里选会话和预设，立刻让 Bot 主动说一句
+desc: >-
+  为 AstrBot 提供一个插件页面：选择目标会话、挑选预设提示词，手动触发 Bot
+  主动发言。插件向目标会话注入一条内部消息，由 AstrBot 原生事件管线生成并发送，
+  因此人格、历史、工具、防抖、分段回复、表情包等行为都沿用原有规则。
+help: 打开 AstrBot WebUI -> 插件 -> 主动发言台 -> 页面，选择会话和预设后点击「立刻触发」。
+version: 1.0.0
+author: Wings
+repo: ""
+astrbot_version: ">=4.29.0"
+tags:
+  - 主动消息
+  - WebUI
+  - 工具

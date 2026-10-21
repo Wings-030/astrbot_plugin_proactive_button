@@ -1,0 +1,16 @@
+{
+  "metadata": {
+    "display_name": "Proactive Console",
+    "short_desc": "Pick a session and a preset, then make the bot speak right away"
+  },
+  "pages": {
+    "console": {
+      "title": "Proactive Console"
+    }
+  },
+  "views": {
+    "console": {
+      "title": "Proactive Console"
+    }
+  }
+}

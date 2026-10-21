@@ -1,0 +1,16 @@
+{
+  "metadata": {
+    "display_name": "主动发言台",
+    "short_desc": "在 WebUI 里选会话和预设，立刻让 Bot 主动说一句"
+  },
+  "pages": {
+    "console": {
+      "title": "主动发言台"
+    }
+  },
+  "views": {
+    "console": {
+      "title": "主动发言台"
+    }
+  }
+}

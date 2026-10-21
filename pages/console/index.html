@@ -1,0 +1,806 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>主动发言台</title>
+    <script src="/api/plugin/page/bridge-sdk.js"></script>
+    <style>
+      :root {
+        --bg: #f5f6fa;
+        --panel: #ffffff;
+        --panel-2: #f8f9fc;
+        --border: #e3e6ee;
+        --text: #1d2330;
+        --muted: #6b7280;
+        --accent: #3b6ef6;
+        --accent-soft: rgba(59, 110, 246, 0.1);
+        --ok: #16a34a;
+        --ok-soft: rgba(22, 163, 74, 0.12);
+        --err: #dc2626;
+        --err-soft: rgba(220, 38, 38, 0.1);
+        --warn: #b45309;
+        --shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+        color-scheme: light;
+      }
+      :root[data-theme="dark"] {
+        --bg: #121419;
+        --panel: #1a1d24;
+        --panel-2: #20242d;
+        --border: #2c313d;
+        --text: #e7eaf0;
+        --muted: #98a1b3;
+        --accent: #6d92ff;
+        --accent-soft: rgba(109, 146, 255, 0.14);
+        --ok: #4ade80;
+        --ok-soft: rgba(74, 222, 128, 0.12);
+        --err: #f87171;
+        --err-soft: rgba(248, 113, 113, 0.12);
+        --warn: #fbbf24;
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        color-scheme: dark;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #121419;
+          --panel: #1a1d24;
+          --panel-2: #20242d;
+          --border: #2c313d;
+          --text: #e7eaf0;
+          --muted: #98a1b3;
+          --accent: #6d92ff;
+          --accent-soft: rgba(109, 146, 255, 0.14);
+          --ok: #4ade80;
+          --ok-soft: rgba(74, 222, 128, 0.12);
+          --err: #f87171;
+          --err-soft: rgba(248, 113, 113, 0.12);
+          --warn: #fbbf24;
+          color-scheme: dark;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: system-ui, -apple-system, "Segoe UI", "PingFang SC",
+          "Microsoft YaHei", sans-serif;
+        font-size: 14px;
+        line-height: 1.55;
+      }
+      .wrap {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px 16px 48px;
+      }
+      header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 650;
+        letter-spacing: 0.2px;
+      }
+      .subtitle {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .chip {
+        flex: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--panel);
+        color: var(--muted);
+        font-size: 12px;
+        white-space: nowrap;
+      }
+      .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--ok);
+      }
+      .dot.busy {
+        background: var(--warn);
+      }
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px;
+        margin-bottom: 14px;
+        box-shadow: var(--shadow);
+      }
+      .section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+      .section-head h2 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .hint {
+        color: var(--muted);
+        font-size: 12px;
+        margin: 8px 0 0;
+      }
+      label {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        margin-bottom: 6px;
+      }
+      select,
+      input[type="text"],
+      textarea {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: var(--panel-2);
+        color: var(--text);
+        font: inherit;
+        padding: 9px 10px;
+        outline: none;
+      }
+      select:focus,
+      input[type="text"]:focus,
+      textarea:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-soft);
+      }
+      textarea {
+        resize: vertical;
+        min-height: 76px;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .row > * {
+        min-width: 0;
+      }
+      button {
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: var(--panel-2);
+        color: var(--text);
+        font: inherit;
+        padding: 9px 14px;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      button:hover {
+        border-color: var(--accent);
+      }
+      button.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+        font-weight: 600;
+      }
+      button.primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      button.ghost {
+        background: transparent;
+      }
+      button.small {
+        padding: 5px 10px;
+        font-size: 12px;
+        border-radius: 7px;
+      }
+      .preset-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+        gap: 8px;
+      }
+      .preset {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 11px 12px;
+        background: var(--panel-2);
+        cursor: pointer;
+        transition: border-color 0.15s, background 0.15s;
+      }
+      .preset:hover {
+        border-color: var(--accent);
+      }
+      .preset.selected {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+      }
+      .preset .name {
+        font-weight: 600;
+        font-size: 13px;
+      }
+      .preset .desc {
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 3px;
+      }
+      .custom-prompt {
+        margin-top: 10px;
+        display: none;
+      }
+      .custom-prompt.show {
+        display: block;
+      }
+      .actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 12px;
+      }
+      .status-text {
+        color: var(--muted);
+        font-size: 12px;
+        margin-right: auto;
+      }
+      .task-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .task {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px 12px;
+        background: var(--panel-2);
+      }
+      .task-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .state {
+        display: inline-block;
+        padding: 1px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .state.running {
+        color: var(--warn);
+        background: rgba(180, 83, 9, 0.12);
+      }
+      .state.ok {
+        color: var(--ok);
+        background: var(--ok-soft);
+      }
+      .state.error {
+        color: var(--err);
+        background: var(--err-soft);
+      }
+      .task-body {
+        margin-top: 7px;
+        font-size: 13px;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .task-error {
+        margin-top: 7px;
+        color: var(--err);
+        font-size: 12px;
+        word-break: break-word;
+      }
+      .empty {
+        color: var(--muted);
+        font-size: 13px;
+        padding: 8px 0;
+      }
+      details.editor {
+        margin-bottom: 14px;
+      }
+      details.editor summary {
+        cursor: pointer;
+        color: var(--muted);
+        font-size: 13px;
+        padding: 10px 16px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        list-style: none;
+      }
+      details.editor summary::-webkit-details-marker {
+        display: none;
+      }
+      details.editor[open] summary {
+        border-radius: 12px 12px 0 0;
+      }
+      details.editor .editor-body {
+        border: 1px solid var(--border);
+        border-top: none;
+        border-radius: 0 0 12px 12px;
+        background: var(--panel);
+        padding: 14px 16px;
+      }
+      .edit-item {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px;
+        margin-bottom: 10px;
+        background: var(--panel-2);
+      }
+      .edit-item .edit-top {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .edit-item textarea {
+        min-height: 64px;
+      }
+      .toast {
+        position: fixed;
+        right: 16px;
+        bottom: 16px;
+        max-width: min(420px, calc(100vw - 32px));
+        background: var(--text);
+        color: var(--bg);
+        padding: 10px 14px;
+        border-radius: 10px;
+        font-size: 13px;
+        opacity: 0;
+        transform: translateY(8px);
+        transition: opacity 0.2s, transform 0.2s;
+        pointer-events: none;
+        z-index: 20;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      @media (max-width: 640px) {
+        .wrap {
+          padding: 14px 12px 40px;
+        }
+        header {
+          flex-direction: column;
+        }
+        .preset-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div>
+          <h1>主动发言台</h1>
+          <p class="subtitle">选一个会话和预设，让大肥鱼立刻开口。生成走 AstrBot 原生回复管线，分段、防抖、表情包都沿用原有规则。</p>
+        </div>
+        <span class="chip"><span id="status-dot" class="dot"></span><span id="status-label">空闲</span></span>
+      </header>
+
+      <section class="card">
+        <div class="section-head">
+          <h2>目标会话</h2>
+          <button id="refresh-sessions" class="small ghost" type="button">刷新会话</button>
+        </div>
+        <label for="session-select">从最近活跃的会话里选</label>
+        <select id="session-select"></select>
+        <p class="hint">找不到目标会话时，可以直接在下面填完整 UMO，例如：平台名:FriendMessage:wxid_xxx</p>
+        <input id="custom-umo" type="text" placeholder="手动填写 UMO（留空则使用上面的选择）" style="margin-top: 8px" />
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <h2>预设提示词</h2>
+          <span id="preset-count" class="hint" style="margin: 0"></span>
+        </div>
+        <div id="preset-grid" class="preset-grid"></div>
+        <div id="custom-prompt" class="custom-prompt">
+          <label for="custom-prompt-text">自定义提示词</label>
+          <textarea id="custom-prompt-text" placeholder="描述这次希望她说什么，例如：吐槽我还没有吃午饭"></textarea>
+        </div>
+        <div style="margin-top: 12px">
+          <label for="extra">补充要求（可选）</label>
+          <textarea id="extra" placeholder="附加在这次发言上的要求，例如：别提表情包，简短一点"></textarea>
+        </div>
+        <div class="actions">
+          <span id="status-text" class="status-text"></span>
+          <button id="trigger" class="primary" type="button">立刻触发</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <h2>最近触发</h2>
+          <button id="refresh-status" class="small ghost" type="button">刷新</button>
+        </div>
+        <div id="task-list" class="task-list">
+          <p class="empty">还没有触发记录。</p>
+        </div>
+      </section>
+
+      <details class="editor">
+        <summary>预设管理（点击展开）</summary>
+        <div class="editor-body">
+          <div id="editor-list"></div>
+          <div class="row" style="justify-content: space-between; margin-top: 4px">
+            <button id="add-preset" class="small" type="button">+ 新增预设</button>
+            <button id="save-presets" class="primary small" type="button">保存预设</button>
+          </div>
+        </div>
+      </details>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+      (function () {
+        const view = window.AstrBotPluginPage;
+        let sessions = [];
+        let presets = [];
+        let defaultId = "";
+        let selectedPreset = "";
+        let toastTimer = null;
+
+        const $ = (id) => document.getElementById(id);
+        const sessionSelect = $("session-select");
+        const customUmo = $("custom-umo");
+        const presetGrid = $("preset-grid");
+        const customPromptWrap = $("custom-prompt");
+        const customPromptText = $("custom-prompt-text");
+        const extraInput = $("extra");
+        const triggerBtn = $("trigger");
+        const statusText = $("status-text");
+        const statusDot = $("status-dot");
+        const statusLabel = $("status-label");
+        const taskList = $("task-list");
+        const editorList = $("editor-list");
+
+        function toast(message) {
+          const el = $("toast");
+          el.textContent = message;
+          el.classList.add("show");
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(() => el.classList.remove("show"), 3200);
+        }
+
+        function apiGet(endpoint, params) {
+          return view.apiGet(endpoint, params || {});
+        }
+        function apiPost(endpoint, body) {
+          return view.apiPost(endpoint, body || {});
+        }
+
+        function fmtTime(epoch) {
+          if (!epoch) return "";
+          const d = new Date(epoch * 1000);
+          return d.toLocaleTimeString("zh-CN", { hour12: false });
+        }
+
+        function currentUmo() {
+          return (customUmo.value || "").trim() || sessionSelect.value || "";
+        }
+
+        function renderSessions() {
+          const current = sessionSelect.value;
+          sessionSelect.innerHTML = "";
+          if (!sessions.length) {
+            const opt = document.createElement("option");
+            opt.value = "";
+            opt.textContent = "没有扫描到会话，请手动填写 UMO";
+            sessionSelect.appendChild(opt);
+            return;
+          }
+          for (const item of sessions) {
+            const opt = document.createElement("option");
+            opt.value = item.umo;
+            const tail = item.last_active ? " · " + String(item.last_active).slice(5, 16) : "";
+            const platform = item.platform ? " · " + item.platform : "";
+            opt.textContent = item.label + platform + tail;
+            sessionSelect.appendChild(opt);
+          }
+          if (sessions.some((item) => item.umo === current)) {
+            sessionSelect.value = current;
+          }
+        }
+
+        function renderPresets() {
+          presetGrid.innerHTML = "";
+          for (const preset of presets) {
+            const el = document.createElement("div");
+            el.className = "preset" + (preset.id === selectedPreset ? " selected" : "");
+            el.dataset.id = preset.id;
+            el.innerHTML =
+              '<div class="name"></div><div class="desc"></div>';
+            el.querySelector(".name").textContent = preset.name;
+            el.querySelector(".desc").textContent = preset.description || "";
+            el.addEventListener("click", () => {
+              selectedPreset = preset.id;
+              renderPresets();
+            });
+            presetGrid.appendChild(el);
+          }
+          const custom = document.createElement("div");
+          custom.className = "preset" + (selectedPreset === "custom" ? " selected" : "");
+          custom.innerHTML =
+            '<div class="name">自定义</div><div class="desc">在下方临时写一段提示词</div>';
+          custom.addEventListener("click", () => {
+            selectedPreset = "custom";
+            renderPresets();
+          });
+          presetGrid.appendChild(custom);
+          $("preset-count").textContent = presets.length + " 个预设";
+          customPromptWrap.classList.toggle("show", selectedPreset === "custom");
+        }
+
+        function renderEditor() {
+          editorList.innerHTML = "";
+          presets.forEach((preset, index) => {
+            const item = document.createElement("div");
+            item.className = "edit-item";
+            item.innerHTML =
+              '<div class="edit-top">' +
+              '<input type="text" class="edit-name" />' +
+              '<label style="margin:0; white-space:nowrap; display:flex; align-items:center; gap:5px">' +
+              '<input type="radio" name="default-preset" class="edit-default" /> 默认' +
+              "</label>" +
+              '<button type="button" class="small ghost edit-delete">删除</button>' +
+              "</div>" +
+              '<textarea class="edit-prompt"></textarea>';
+            item.querySelector(".edit-name").value = preset.name;
+            item.querySelector(".edit-prompt").value = preset.prompt;
+            const radio = item.querySelector(".edit-default");
+            radio.checked = preset.id === (defaultId || presets[0]?.id);
+            radio.addEventListener("change", () => {
+              defaultId = preset.id;
+            });
+            item.querySelector(".edit-delete").addEventListener("click", () => {
+              if (presets.length <= 1) {
+                toast("至少要保留一个预设");
+                return;
+              }
+              const removed = presets.splice(index, 1)[0];
+              if (selectedPreset === removed.id) {
+                selectedPreset = presets[0]?.id || "";
+              }
+              if (defaultId === removed.id) {
+                defaultId = presets[0]?.id || "";
+              }
+              renderPresets();
+              renderEditor();
+            });
+            editorList.appendChild(item);
+          });
+        }
+
+        function collectEditor() {
+          const items = Array.from(editorList.querySelectorAll(".edit-item"));
+          const result = [];
+          for (const item of items) {
+            const name = item.querySelector(".edit-name").value.trim();
+            const prompt = item.querySelector(".edit-prompt").value.trim();
+            const isDefault = item.querySelector(".edit-default").checked;
+            if (!name || !prompt) {
+              toast("预设名称和提示词都不能为空");
+              return null;
+            }
+            result.push({
+              id: presets[items.indexOf(item)]?.id || "",
+              name,
+              prompt,
+              description: presets[items.indexOf(item)]?.description || "",
+              _default: isDefault,
+            });
+          }
+          const def = result.find((item) => item._default);
+          result.forEach((item) => delete item._default);
+          return { presets: result, default_id: def ? def.id : defaultId };
+        }
+
+        async function loadSessions() {
+          try {
+            const resp = await apiGet("sessions");
+            sessions = resp.sessions || [];
+            renderSessions();
+          } catch (err) {
+            toast("读取会话失败：" + (err?.message || err));
+          }
+        }
+
+        async function loadPresets() {
+          try {
+            const resp = await apiGet("presets");
+            presets = resp.presets || [];
+            defaultId = resp.default_id || "";
+            if (!selectedPreset) {
+              selectedPreset = defaultId || presets[0]?.id || "";
+            }
+            if (
+              selectedPreset !== "custom" &&
+              !presets.some((item) => item.id === selectedPreset)
+            ) {
+              selectedPreset = defaultId || presets[0]?.id || "";
+            }
+            renderPresets();
+            renderEditor();
+          } catch (err) {
+            toast("读取预设失败：" + (err?.message || err));
+          }
+        }
+
+        function renderTasks(tasks) {
+          taskList.innerHTML = "";
+          if (!tasks.length) {
+            taskList.innerHTML = '<p class="empty">还没有触发记录。</p>';
+            return;
+          }
+          for (const task of tasks) {
+            const el = document.createElement("div");
+            el.className = "task";
+            const stateLabel =
+              task.state === "ok" ? "已发送" : task.state === "error" ? "失败" : "生成中";
+            const head = document.createElement("div");
+            head.className = "task-head";
+            head.innerHTML =
+              '<span class="state ' +
+              task.state +
+              '">' +
+              stateLabel +
+              "</span>" +
+              '<span class="task-session"></span>' +
+              '<span class="task-preset"></span>' +
+              '<span class="task-time"></span>';
+            head.querySelector(".task-session").textContent = task.session_label || task.umo;
+            head.querySelector(".task-preset").textContent = task.preset_name || "";
+            head.querySelector(".task-time").textContent = fmtTime(task.started_at);
+            el.appendChild(head);
+            if (task.state === "ok" && task.text) {
+              const body = document.createElement("div");
+              body.className = "task-body";
+              body.textContent = task.text;
+              el.appendChild(body);
+            }
+            if (task.state === "error" && task.error) {
+              const errorEl = document.createElement("div");
+              errorEl.className = "task-error";
+              errorEl.textContent = task.error;
+              el.appendChild(errorEl);
+            }
+            taskList.appendChild(el);
+          }
+        }
+
+        async function refreshStatus() {
+          try {
+            const resp = await apiGet("status");
+            const running = resp.running_sessions || [];
+            renderTasks(resp.tasks || []);
+            const busy = running.length > 0;
+            statusDot.classList.toggle("busy", busy);
+            statusLabel.textContent = busy ? "生成中…" : "空闲";
+            triggerBtn.disabled = busy && running.includes(currentUmo());
+          } catch (err) {
+            statusLabel.textContent = "状态读取失败";
+          }
+        }
+
+        async function trigger() {
+          const umo = currentUmo();
+          if (!umo) {
+            toast("请先选择会话或填写 UMO");
+            return;
+          }
+          if (umo.split(":").length < 3) {
+            toast("UMO 格式不对，至少要有 平台:类型:目标");
+            return;
+          }
+          const body = {
+            umo,
+            preset_id: selectedPreset,
+            extra: extraInput.value.trim(),
+          };
+          if (selectedPreset === "custom") {
+            body.prompt = customPromptText.value.trim();
+            if (!body.prompt) {
+              toast("自定义提示词不能为空");
+              return;
+            }
+          }
+          triggerBtn.disabled = true;
+          statusText.textContent = "正在提交…";
+          try {
+            const resp = await apiPost("trigger", body);
+            if (!resp.ok) {
+              toast(resp.error || "触发失败");
+              statusText.textContent = "";
+            } else {
+              statusText.textContent = "已开始生成，稍后查看下方结果";
+              toast("已开始生成");
+              refreshStatus();
+            }
+          } catch (err) {
+            toast("触发失败：" + (err?.message || err));
+            statusText.textContent = "";
+          } finally {
+            setTimeout(() => {
+              triggerBtn.disabled = false;
+            }, 600);
+          }
+        }
+
+        async function savePresets() {
+          const payload = collectEditor();
+          if (!payload) return;
+          try {
+            const resp = await apiPost("presets/save", payload);
+            if (!resp.ok) {
+              toast(resp.error || "保存失败");
+              return;
+            }
+            presets = resp.presets || [];
+            defaultId = resp.default_id || "";
+            renderPresets();
+            renderEditor();
+            toast("预设已保存");
+          } catch (err) {
+            toast("保存失败：" + (err?.message || err));
+          }
+        }
+
+        function bind() {
+          $("refresh-sessions").addEventListener("click", loadSessions);
+          $("refresh-status").addEventListener("click", refreshStatus);
+          triggerBtn.addEventListener("click", trigger);
+          $("save-presets").addEventListener("click", savePresets);
+          $("add-preset").addEventListener("click", () => {
+            presets.push({
+              id: "preset_" + Math.random().toString(36).slice(2, 10),
+              name: "新预设",
+              description: "",
+              prompt: "",
+            });
+            renderEditor();
+          });
+          sessionSelect.addEventListener("change", () => {
+            statusText.textContent = "";
+          });
+        }
+
+        async function init() {
+          if (!view) {
+            document.body.innerHTML =
+              '<div class="wrap"><p class="empty">页面桥接脚本未加载，请从 AstrBot 插件页面进入。</p></div>';
+            return;
+          }
+          await view.ready();
+          view.onContext((ctx) => {
+            document.documentElement.dataset.theme = ctx?.isDark ? "dark" : "light";
+          });
+          bind();
+          await Promise.all([loadSessions(), loadPresets()]);
+          await refreshStatus();
+          setInterval(refreshStatus, 3000);
+        }
+
+        init();
+      })();
+    </script>
+  </body>
+</html>
